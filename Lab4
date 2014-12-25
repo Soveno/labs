@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <pthread.h>
+void getTime(struct tm *current_time);
+void *thread_func(void *file);
+int main()
+{
+pthread_t tid ;
+struct tm *time = malloc(sizeof( struct tm ));
+int fd[2];
+char path[256] = "file.fifo";
+if( pipe(fd) == 0 )
+{
+if( pthread_create(&tid, NULL, thread_func, &fd[1]) == 0 )
+{
+pthread_join(tid, NULL);
+read(fd[0], time, sizeof(struct tm));
+printf("Time from PIPE: %d:%d:%d\n",time->tm_hour, time->tm_min, time->tm_sec);
+}
+else
+{
+printf("Can't create thread.\n");
+}
+}
+else
+{
+printf("Can't open pipe.\n");
+}
+if(mkfifo(path, 0777) == 0)
+{
+*fd = open(path, O_RDWR );
+if( *fd != -1)
+{
+if( pthread_create(&tid, NULL, thread_func, fd) == 0)
+{
+pthread_join(tid, NULL);
+read(*fd, time, sizeof( struct tm ));
+printf("Time from FIFO: %d:%d:%d\n",time->tm_hour, time->tm_min, time->tm_sec);
+}
+else
+{
+printf("Can't creat thread.\n");
+}
+}
+else
+{
+printf("Can't open FIFO.\n");
+}
+}
+else
+{
+printf("Can't create FIFO.\n");
+}
+return 0;
+}
+void getTime(struct tm *current_time)
+{
+time_t sec = 0;
+time(&sec);
+*current_time = *(localtime(&sec));
+}
+void *thread_func(void *file)
+{
+sleep(1);
+struct tm loc_time;
+getTime(&loc_time);
+write(*( (int *)file ), &loc_time, sizeof( struct tm ));
+}
