@@ -1,0 +1,50 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <math.h>
+#include <time.h>
+void getTime(struct tm **time_struct);
+int power(int x, int y);
+int main()
+{
+struct tm *time_struct;
+getTime(&time_struct);
+pid_t current_pid;
+int process_count = power(2, time_struct->tm_hour);
+int status;
+int i = 0;
+for(i; i < process_count; ++i )
+{
+switch(current_pid = fork())
+{
+case -1:
+printf("Can't create process");
+exit(1);
+case 0: //code for child process
+getTime(&time_struct);
+double argument = (3.14159265 * time_struct->tm_min / 14);
+sin(argument);
+exit(0);
+default: //code for parent process
+wait(&status);
+printf("Process with PID = %d was terminated with %d status.\n",(int)current_pid, status);
+}
+}
+return 0;
+}
+void getTime(struct tm **time_struct)
+{
+time_t sec;
+time(&sec);
+*time_struct = localtime(&sec);
+}
+int power(int x, int y)
+{
+int result = x;
+int i = 0;
+for(i; i < (y-1); i++)
+result = result * x;
+return result;
+}
