@@ -1,0 +1,76 @@
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+int main()
+{
+    char path[256];
+    DIR *directory;
+    struct dirent *directory_entry;
+    struct stat statbuf;
+    char full_name[512];
+
+    //Get directory path
+    printf("\n Input directory path: ");
+    scanf("%s",path);
+
+    strcpy(full_name, path);
+
+    if( (directory = opendir(path)) != NULL )
+    {
+	while( (directory_entry = readdir(directory)) != NULL )
+	{
+	    strcat(full_name, "/");
+	    strcat(full_name, directory_entry->d_name);
+
+	    //Get entry's stats
+	    if( stat( full_name, &statbuf)  != (-1) )
+	    {
+		//Print information
+		printf("File name: %s\n", directory_entry->d_name);
+		if(directory_entry->d_type == DT_BLK)
+		    printf("File type: block device\n");
+		if(directory_entry->d_type == DT_CHR)
+		    printf("File type: character device\n");
+		if(directory_entry->d_type == DT_DIR)
+		    printf("File type: directory\n");
+		if(directory_entry->d_type == DT_FIFO)
+		    printf("File type: named pipe(FIFO)\n");
+		if(directory_entry->d_type == DT_LNK)
+		    printf("File type: symbolic link\n");
+		if(directory_entry->d_type == DT_REG)
+		    printf("File type: regular file\n");
+		if(directory_entry->d_type == DT_SOCK)
+		    printf("File type: UNIX domain socket\n");
+		if(directory_entry->d_type == DT_UNKNOWN)
+		    printf("File type: file type is unknown\n");
+		printf("I-node number: %ld\n", (long) statbuf.st_ino);
+		printf("Mode: %lo (octal)\n", (unsigned long) statbuf.st_mode);
+		printf("Link count: %ld\n", (long) statbuf.st_nlink);
+		printf("Ownership: UID=%ld GID=%ld\n", (long)statbuf.st_uid, (long)statbuf.st_gid);
+		printf("Preferred I/O block size: %ld bytes\n", (long) statbuf.st_blksize);
+		printf("File size: %lld bytes\n",(long long) statbuf.st_size);
+		printf("Blocks allocated: %lld\n",(long long) statbuf.st_blocks);
+		printf("Last status change: %s", ctime(&statbuf.st_ctime));
+		printf("Last file access: %s", ctime(&statbuf.st_atime));
+		printf("Last file modification: %s", ctime(&statbuf.st_mtime));
+		printf("\n\n");
+		
+		strcpy(full_name, path);
+	    }
+	    else
+		continue;
+	}
+	closedir(directory);
+    }
+    else
+    {
+	printf("Can't open directory.\n");
+    }
+
+    return 0;
+}
